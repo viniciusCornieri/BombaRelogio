@@ -1,0 +1,103 @@
+#include <SPI.h>
+// include the library code:
+#include <LiquidCrystal.h>
+
+
+// initialize the library with the numbers of the interface pins
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+int bite[] = {7, 8, 9, 10, 13};
+
+void setup() {
+  // set up the LCD's number of columns and rows: 
+  lcd.begin(16, 2); 
+  pinMode(6, INPUT);
+  randomSeed(analogRead(0));
+  for(int i = 0; i < 5; i++){
+    pinMode(bite[i], INPUT);
+  }
+}
+
+int time = 120;
+int sp = 0;
+int rd = -1;
+boolean estaClicado = false;
+
+void toca() {
+    for (int i = 0; i < sp; i++){
+    int noteDuration = 1000/4;
+    tone(1, 1760,noteDuration);
+
+    // to distinguish the notes, set a minimum time between them.
+    // the note's duration + 30% seems to work well:
+    int pauseBetweenNotes = noteDuration * 1.30;
+    delay(pauseBetweenNotes);
+    // stop the tone playing:
+    noTone(1);
+    delay(1000/sp);
+    }
+    
+}
+
+void loop() {
+   if (time > 0) {
+    // lcd.clear();
+    //lcd.print(digitalRead(6));
+    int t = digitalRead(6);
+    delay(10);
+    t *= digitalRead(6);
+    delay(20);
+    t *= digitalRead(6);
+    if (t == 1) { //
+       //estadoClicado = true;
+       lcd.clear();
+       if (!estaClicado)
+         sp += 1;
+       estaClicado = true;
+       lcd.print("Chave: ");
+       if (rd == -1){
+         rd =  random(1, 32);
+       }
+       lcd.print(rd);  
+    } else { 
+      if(estaClicado) {
+        time = time/2; 
+        sp += 1;
+      } 
+      estaClicado = false;
+     
+      lcd.clear();
+      lcd.print("Bomba RELOGIO");
+    }
+    
+    lcd.setCursor(0, 1);
+    // print the number of seconds since reset:
+    lcd.print(time);
+    time -= sp;
+    
+    int check = 0;
+    for(int i = 0; i < 5; i++){
+        int d = digitalRead(bite[i]) * pow(2, i);
+        
+        if (d == 7) d = 8; 
+        if (d == 15) d = 16;
+        if (d == 3) d = 4;
+  
+        check += d;
+        
+    }
+
+    if (check == rd) {
+      lcd.clear();
+      lcd.print("CABOU!!!");
+      for(;;);
+    }
+    toca();
+    
+    lcd.clear();
+   } else {
+      lcd.clear();
+      lcd.print("BOOM!VC MORREU!");
+      for(;;) { sp= 10000; toca();};
+  }
+  
+}
